@@ -1,0 +1,13 @@
+specimen_id
+collection_date
+type_of_test                
+project_job_number
+employer_name
+donor_first_name
+donor_last_name
+donor_last_four_ssn
+donor_dob
+donor_phone
+collector_first_name
+collector_last_name
+instant_oral_tox

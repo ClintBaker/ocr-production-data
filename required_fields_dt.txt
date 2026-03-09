@@ -1,0 +1,38 @@
+specimen_id
+collection_date                         ***tested*** (date)
+type_of_test                
+project_job_number
+employer_name
+donor_first_name
+donor_last_name
+donor_last_four_ssn
+donor_dob
+donor_phone
+collector_first_name
+collector_last_name                     ***tested-by*** (First Last)
+$$$instant_oral_tox$$$ - (POS or NEG)   ***result*** -> not sure
+
+
+***tests*** -> possibly have a pre-defined table that recs w/ type of test
+***(panel)*** (rec w/ API)
+
+
+
+
+
+
+DESERT TOX API REQUEST
+
+POST {server}/panelresults/{company}
+
+BODY:
+token: {token}
+id: "ABC123" -> Spec ID?
+panel: "ALC" -> MUST MATCH PREDEFINED PANELS
+result: "POS" -> PANEL RESULT CODE (SEE API TABLES)
+tested: "date" -> Tested date / time (Use "Z" for UTC, or loacl plus offset "-07:00")
+tested-by: "First Last"
+tests: [{code: "ALC-1", result: "POS", quantity: "15.00", "units": "ng/mL"}]
+
+RES:
+status: (SUCCESS, Expired, NotAuth, Error, Duplicate)

@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Add your Prisma models below this line
+
+model Job {
+  id        String   @id @default(uuid())
+  // Job identification (unique combination)
+  collectionDate DateTime // Normalized to YYYY-MM-DD (time set to 00:00:00)
+  collectorName String
+  clientName String
+  
+  // Job metadata
+  startTime DateTime?
+  endTime DateTime?
+  miles Decimal? @db.Decimal(10, 2)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  forms CCFForm[]
+  
+  // Unique constraint on job identification
+  @@unique([collectionDate, collectorName, clientName])
+  @@index([collectionDate])
+}
+
+model CCFForm {
+  id        String   @id @default(uuid())
+  
+  // New fields from new_fields.txt (all optional)
+  specimenId String?
+  collectionDate DateTime?
+  typeOfTest String?
+  projectJobNumber String?
+  employerName String?
+  donorFirstName String?
+  donorLastName String?
+  donorLastFourSsn String?
+  donorDob DateTime?
+  donorPhone String?
+  collectorFirstName String?
+  collectorLastName String?
+  instantOralTox String?
+  
+  // Job association (keep for Jobs functionality)
+  jobId String?
+  job Job? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  
+  // Metadata fields (keep)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  humanReviewed Boolean @default(false)
+  humanReviewedAt DateTime?
+  humanReviewedBy String?
+  formUrl String? // URL to the PDF file in Supabase storage
+}
