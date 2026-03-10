@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
+import { put } from '@vercel/blob'
 import { extractCCFDataFromPDF } from '@/lib/google-ai'
 import { saveCCFFormToDatabase, checkForDuplicateCCFForm } from '@/lib/db-helpers'
 
-// Directory for uploaded PDFs (under public so they're served at /uploads/...)
 const UPLOADS_DIR = 'public/uploads'
 
 export async function POST(request: NextRequest) {
@@ -26,9 +26,7 @@ export async function POST(request: NextRequest) {
       console.log(`  [${index + 1}] ${file.name} (${(file.size / 1024).toFixed(2)} KB)`)
     })
 
-    // Ensure uploads directory exists (relative to cwd, e.g. project root)
-    const uploadsPath = path.join(process.cwd(), UPLOADS_DIR)
-    await mkdir(uploadsPath, { recursive: true })
+    const useVercelBlob = !!process.env.BLOB_READ_WRITE_TOKEN
 
     const processedFiles = await Promise.all(
       files.map(async (file) => {
@@ -69,16 +67,26 @@ export async function POST(request: NextRequest) {
             skipped = true
           } else {
             const fileExt = file.name.split('.').pop() || 'pdf'
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-            const filePath = path.join(uploadsPath, fileName)
+            const fileName = `ccf-forms/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
 
-            const arrayBuffer = await file.arrayBuffer()
-            const buffer = Buffer.from(arrayBuffer)
-            await writeFile(filePath, buffer)
-
-            // Store URL path for browser (served from public/uploads)
-            formUrl = `/uploads/${fileName}`
-            console.log(`✓ Saved PDF to ${formUrl}`)
+            if (useVercelBlob) {
+              const arrayBuffer = await file.arrayBuffer()
+              const blob = await put(fileName, arrayBuffer, {
+                access: 'public',
+                contentType: 'application/pdf',
+              })
+              formUrl = blob.url
+              console.log(`✓ Saved PDF to Vercel Blob: ${formUrl}`)
+            } else {
+              const uploadsPath = path.join(process.cwd(), UPLOADS_DIR)
+              await mkdir(uploadsPath, { recursive: true })
+              const filePath = path.join(uploadsPath, path.basename(fileName))
+              const arrayBuffer = await file.arrayBuffer()
+              const buffer = Buffer.from(arrayBuffer)
+              await writeFile(filePath, buffer)
+              formUrl = `/uploads/${path.basename(fileName)}`
+              console.log(`✓ Saved PDF locally: ${formUrl}`)
+            }
 
             try {
               formId = await saveCCFFormToDatabase(extractedData, formUrl)

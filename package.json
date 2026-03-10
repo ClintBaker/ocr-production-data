@@ -19,6 +19,7 @@
     "@google/genai": "^1.29.1",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.19.0",
+    "@vercel/blob": "^2.3.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.553.0",
